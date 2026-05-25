@@ -1,0 +1,160 @@
+-- Create database if it does not exist
+CREATE DATABASE IF NOT EXISTS real_estate_marketplace;
+USE real_estate_marketplace;
+
+-- Drop tables in reverse order of dependencies to avoid foreign key constraints during resets
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS property_views;
+DROP TABLE IF EXISTS activity_logs;
+DROP TABLE IF EXISTS inquiries;
+DROP TABLE IF EXISTS favorites;
+DROP TABLE IF EXISTS properties;
+DROP TABLE IF EXISTS agents;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS admins;
+
+-- ==========================================
+-- 1. INDEPENDENT CORE TABLES
+-- ==========================================
+
+-- ADMINS TABLE
+CREATE TABLE admins (
+    admin_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- USERS TABLE (Regular Clients / Buyers / Renters)
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AGENTS TABLE (With integrated Admin Verification mapping)
+CREATE TABLE agents (
+    agent_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    agency_name VARCHAR(100),
+    approval_status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+    approved_by_admin INT,
+    approved_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (approved_by_admin) REFERENCES admins(admin_id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- 2. DEPENDENT ENTITY TABLES
+-- ==========================================
+
+-- PROPERTIES TABLE (With admin approval auditing fields)
+CREATE TABLE properties (
+    property_id INT AUTO_INCREMENT PRIMARY KEY,
+    agent_id INT NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    price DECIMAL(12, 2) NOT NULL,
+    property_type ENUM('House', 'Apartment', 'Condo', 'Land') NOT NULL,
+    status ENUM('Pending_Approval', 'Available', 'Rent', 'Sold', 'Pending_Sale', 'Rejected') DEFAULT 'Pending_Approval',
+    address VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    bedrooms INT DEFAULT 0,
+    bathrooms INT DEFAULT 0,
+    approved_by_admin INT,
+    approved_at TIMESTAMP NULL,
+    rejection_reason VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (agent_id) REFERENCES agents(agent_id) ON DELETE CASCADE,
+    FOREIGN KEY (approved_by_admin) REFERENCES admins(admin_id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- 3. INTERACTION, INTERMEDIATE & LOGGING TABLES
+-- ==========================================
+
+-- FAVORITES TABLE (Many-to-Many Bridge)
+CREATE TABLE favorites (
+    user_id INT NOT NULL,
+    property_id INT NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, property_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE
+);
+
+-- INQUIRIES TABLE
+CREATE TABLE inquiries (
+    inquiry_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    property_id INT NOT NULL,
+    agent_id INT NOT NULL,
+    message TEXT NOT NULL,
+    status ENUM('New', 'Read', 'Replied', 'Closed') DEFAULT 'New',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE,
+    FOREIGN KEY (agent_id) REFERENCES agents(agent_id) ON DELETE CASCADE
+);
+
+-- ACTIVITY LOGS TABLE (Polymorphic System-Wide Tracking)
+CREATE TABLE activity_logs (
+    log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_type ENUM('User', 'Agent', 'Admin') NOT NULL,
+    associated_id INT NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    description TEXT,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- PROPERTY VIEWS TABLE (Click Analytics)
+CREATE TABLE property_views (
+    view_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    property_id INT NOT NULL,
+    user_id INT DEFAULT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+-- TRANSACTIONS TABLE (Financial Lifecycle Closures)
+CREATE TABLE transactions (
+    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    property_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    agent_id INT NOT NULL,
+    transaction_type ENUM('Sale', 'Rent') NOT NULL,
+    amount DECIMAL(12, 2) NOT NULL,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reference_number VARCHAR(100) UNIQUE NOT NULL,
+    notes TEXT,
+    FOREIGN KEY (property_id) REFERENCES properties(property_id),
+    FOREIGN KEY (buyer_id) REFERENCES users(user_id),
+    FOREIGN KEY (agent_id) REFERENCES agents(agent_id)
+);
+
+-- CREATE PERFORMANCE INDEXES FOR OPTIMIZED READING/AGGREGATION
+CREATE INDEX idx_property_views_perf ON property_views (property_id, viewed_at);
+CREATE INDEX idx_properties_status ON properties (status);
+
+
+CREATE TABLE property_images (
+    image_id INT AUTO_INCREMENT PRIMARY KEY,
+    property_id INT NOT NULL,
+    image_url VARCHAR(2048) NOT NULL, -- Standard max URL length compatibility
+    is_thumbnail BOOLEAN DEFAULT FALSE, -- Flag to identify the primary thumbnail image
+    display_order INT DEFAULT 0, -- Controls sorting order in a frontend slider/gallery
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE
+);
+

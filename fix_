@@ -1,0 +1,50 @@
+<?php
+// fix_admin.php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once 'config.php';
+
+echo "<h2>🔧 Admin Account Diagnostics Engine</h2>";
+
+try {
+    // 1. Force fix the column size in case it's truncating the password hash
+    echo "• Checking and fixing database column limits...<br>";
+    $pdo->exec("ALTER TABLE admins MODIFY COLUMN password_hash VARCHAR(255) NOT NULL");
+    
+    // 2. Clear out any broken records with that email
+    echo "• Purging old conflicting records...<br>";
+    $stmt = $pdo->prepare("DELETE FROM admins WHERE email = ?");
+    $stmt->execute(['admin@estate.com']);
+
+    // 3. Generate a fresh native BCRYPT hash directly on your server
+    echo "• Generating fresh local crypt-hash...<br>";
+    $raw_password = 'Admin123!';
+    $native_hash = password_hash($raw_password, PASSWORD_BCRYPT);
+
+    // 4. Insert the clean account layout
+    echo "• Registering new clean admin profile...<br>";
+    $insert_stmt = $pdo->prepare("INSERT INTO admins (username, email, password_hash) VALUES (?, ?, ?)");
+    $insert_stmt->execute(['admin', 'admin@estate.com', $native_hash]);
+
+    echo "<h3 style='color: green;'>✅ SUCCESS! Master admin account has been created.</h3>";
+    echo "<strong>Target Email:</strong> admin@estate.com<br>";
+    echo "<strong>Target Password:</strong> Admin123!<br><br>";
+    
+    // 5. Test validation directly on the spot to see if it works right here
+    echo "<h4>• Running Immediate Validation Test:</h4>";
+    $test_stmt = $pdo->prepare("SELECT * FROM admins WHERE email = ?");
+    $test_stmt->execute(['admin@estate.com']);
+    $test_user = $test_stmt->fetch();
+
+    if ($test_user && password_verify($raw_password, $test_user['password_hash'])) {
+        echo "<b style='color:green;'>🎉 Internal test passed! Your PHP engine successfully verified this account.</b><br><br>";
+        echo "<a href='admin_login.php' style='font-size: 16px; font-weight: bold;'>Go to admin_login.php and try logging in now!</a>";
+    } else {
+        echo "<b style='color:red;'>❌ Internal test failed! Something is modifying strings between PHP and your MySQL instance.</b>";
+    }
+
+} catch (\PDOException $e) {
+    echo "<h3 style='color: red;'>❌ Database Error:</h3> " . $e->getMessage();
+}
+?>
