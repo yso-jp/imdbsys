@@ -26,6 +26,11 @@ if (!$property) {
     die("Property not found.");
 }
 
+// Check if the property is already in the user's favorites
+$fav_stmt = $pdo->prepare("SELECT 1 FROM favorites WHERE user_id = ? AND property_id = ?");
+$fav_stmt->execute([$user_id, $property_id]);
+$is_favorite = (bool)$fav_stmt->fetch();
+
 // Check for existing conversation to avoid duplicate threads
 $stmtConv = $pdo->prepare("
     SELECT cp.conversation_id 
@@ -51,6 +56,7 @@ $existing_conv = $stmtConv->fetch();
         .nav-links a:hover { color: #ffc107; }
 
         .container { max-width: 900px; margin: 30px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header-section { display: flex; justify-content: space-between; align-items: start; }
         .price { font-size: 32px; color: #007bff; font-weight: bold; }
         .specs { display: flex; gap: 20px; margin: 20px 0; font-size: 16px; color: #555; }
         .action-box { display: flex; gap: 15px; margin-top: 30px; padding: 20px; background: #f1f3f5; border-radius: 8px; }
@@ -67,9 +73,9 @@ $existing_conv = $stmtConv->fetch();
     <nav class="navbar">
         <a href="index.php" class="logo">🏠 EstateMarket</a>
         <ul class="nav-links">
+            <li><a href="client_profile.php">👤 Profile</a></li>
             <li><a href="buy.php">Buy</a></li>
             <li><a href="rent.php">Rent</a></li>
-            <li><a href="list_property.php">List Property</a></li>
             <li><a href="transaction_history.php">My Transactions</a></li>
             <li><a href="client_inquiries.php">My Messages</a></li>
             <li><a href="logout.php" style="color: #dc3545; font-weight: bold;">Logout</a></li>
@@ -77,13 +83,21 @@ $existing_conv = $stmtConv->fetch();
     </nav>
 
     <div class="container">
-        <h1><?= htmlspecialchars($property['title']) ?></h1>
-        <div class="price">$<?= number_format($property['price'], 2) ?></div>
+        <div class="header-section">
+            <div>
+                <h1><?= htmlspecialchars($property['title']) ?></h1>
+                <div class="price">$<?= number_format($property['price'], 2) ?></div>
+            </div>
+            <a href="toggle_favorite.php?id=<?= $property['property_id'] ?>" style="font-size: 32px; text-decoration: none; padding: 10px;">
+                <?= $is_favorite ? '❤️' : '🤍' ?>
+            </a>
+        </div>
+
         <p>📍 <?= htmlspecialchars($property['address']) ?>, <?= htmlspecialchars($property['city']) ?></p>
         
         <div class="specs">
-            <span>🛏️ <?= $property['bedrooms'] ?> Beds</span>
-            <span>🛁 <?= $property['bathrooms'] ?> Baths</span>
+            <span>🛏️ <?= intval($property['bedrooms']) ?> Beds</span>
+            <span>🛁 <?= intval($property['bathrooms']) ?> Baths</span>
             <span>🏷️ <?= htmlspecialchars($property['property_type']) ?></span>
             <span>💳 Type: <?= htmlspecialchars($property['listing_type']) ?></span>
         </div>
@@ -115,7 +129,9 @@ $existing_conv = $stmtConv->fetch();
             </div>
         </div>
         <br>
-        <a href="index.php">← Back to Search</a>
+        <button onclick="history.back();" style="background: none; border: none; color: #007bff; cursor: pointer; text-decoration: underline; padding: 0; font-size: 16px;">
+            ← Back to Previous Page
+        </button>
     </div>
 </body>
 </html>

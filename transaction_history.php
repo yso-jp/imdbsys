@@ -51,9 +51,10 @@ $transactions = $stmt->fetchAll();
     <nav class="navbar">
         <a href="index.php" class="logo">🏠 EstateMarket</a>
         <ul class="nav-links">
+        <li><a href="client_profile.php">👤 Profile</a></li>
+
             <li><a href="buy.php">Buy</a></li>
             <li><a href="rent.php">Rent</a></li>
-            <li><a href="list_property.php">List Property</a></li>
             <li><a href="transaction_history.php" style="color: #ffc107;">My Transactions</a></li>
             <li><a href="client_inquiries.php">My Messages</a></li>
             <li><a href="logout.php" style="color: #dc3545; font-weight: bold;">Logout</a></li>

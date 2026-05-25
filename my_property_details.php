@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         label { display: block; margin-top: 15px; font-weight: bold; }
         input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         button { margin-top: 20px; background: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .back-btn { background: #95a5a6; margin-top: 20px; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; color: white; text-decoration: none; display: inline-block; }
         .alert { padding: 10px; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 20px; }
     </style>
 </head>
@@ -62,12 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <nav class="navbar">
         <a href="agent_dashboard.php" class="logo">💼 Agent Hub</a>
         <div class="nav-links">
-        <a href="add_property.php">➕ Add Property</a>
+             <a href="agent_profile.php">👤 Profile</a>
+
+            <a href="add_property.php">➕ Add Property</a>
             <a href="my_property.php">🏡 My Properties</a>
             <a href="agent_inquiries.php">📩 My Inquiries</a>
             <a href="agent_transaction_history.php">💰 My Transactions</a>
-            <a href="logout.php" class="logout-btn">🚪 Logout</a>
-            <a href="my_property.php">← Back to My Properties</a>
+            <a href="logout.php">🚪 Logout</a>
         </div>
     </nav>
 
@@ -79,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p><strong>Price:</strong> $<?= number_format($property['price'], 2) ?></p>
             <p><strong>Description:</strong> <?= nl2br(htmlspecialchars($property['description'])) ?></p>
             <p><strong>Status:</strong> <?= htmlspecialchars($property['status']) ?></p>
+            
+            <button class="back-btn" onclick="history.back();">← Back</button>
         </div>
 
         <div class="card">

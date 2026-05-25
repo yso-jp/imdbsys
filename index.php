@@ -24,11 +24,11 @@ if (!isset($_SESSION['user_id'])) {
         /* Navbar Style */
         .navbar { background-color: #343a40; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         .navbar .logo { color: #fff; font-size: 22px; font-weight: bold; text-decoration: none; }
-        .navbar .nav-links { list-style: none; display: flex; margin: 0; padding: 0; }
+        .navbar .nav-links { list-style: none; display: flex; margin: 0; padding: 0; align-items: center; }
         .navbar .nav-links li { margin-left: 20px; }
         .navbar .nav-links a { color: #f8f9fa; text-decoration: none; font-size: 16px; transition: color 0.2s; }
         .navbar .nav-links a:hover { color: #ffc107; }
-        .welcome-msg { color: #fff; font-size: 14px; margin-right: 15px; font-style: italic; }
+        .welcome-msg { color: #adb5bd; font-size: 14px; margin-right: 15px; font-style: italic; }
 
         /* Hero Section */
         .hero { 
@@ -55,6 +55,7 @@ if (!isset($_SESSION['user_id'])) {
         <a href="index.php" class="logo">🏠 EstateMarket</a>
         <ul class="nav-links">
             <li><span class="welcome-msg">Welcome, <?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></span></li>
+            <li><a href="client_profile.php">👤 Profile</a></li>
             <li><a href="buy.php">Buy</a></li>
             <li><a href="rent.php">Rent</a></li>
             <li><a href="list_property.php">List Property</a></li>

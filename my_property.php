@@ -69,6 +69,8 @@ $properties = $stmt->fetchAll();
     <nav class="navbar">
         <a href="agent_dashboard.php" class="logo">💼 Agent Hub</a>
         <div class="nav-links">
+             <a href="agent_profile.php">👤 Profile</a>
+
             <a href="add_property.php">➕ Add Property</a>
             <a href="my_property.php">🏡 My Properties</a>
             <a href="agent_inquiries.php">📩 My Inquiries</a>

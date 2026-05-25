@@ -67,11 +67,11 @@ if ($conv_id) {
                 <li><a href="agent_inquiries.php">My Messages</a></li>
                 <li><a href="agent_transaction_history.php">My Transactions</a></li>
             <?php else: ?>
-                <li><a href="buy.php">Buy</a></li>
-                <li><a href="rent.php">Rent</a></li>
-                <li><a href="list_property.php">List Property</a></li>
-                <li><a href="transaction_history.php">My Transactions</a></li>
-                <li><a href="client_inquiries.php">My Messages</a></li>
+            <li><a href="client_profile.php">👤 Profile</a></li>
+            <li><a href="buy.php">Buy</a></li>
+            <li><a href="rent.php">Rent</a></li>
+            <li><a href="transaction_history.php">My Transactions</a></li>
+            <li><a href="client_inquiries.php">My Messages</a></li>
             <?php endif; ?>
             <li><a href="logout.php" style="color: #dc3545;">Logout</a></li>
         </ul>
